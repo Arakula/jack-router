@@ -111,12 +111,11 @@ extern LONG UnregisterAsioDriver(CLSID,char *,char *);
 HRESULT _stdcall DllRegisterServer()
 {
 	LONG	rc;
-	char	errstr[128];
 
 	rc = RegisterAsioDriver (IID_ASIO_DRIVER, JACK_ROUTER,"JackRouter","JackRouter","Apartment");
 
 	if (rc) {
-		memset(errstr,0,128);
+		char errstr[128] = { 0 };
 		sprintf(errstr,"Register Server failed ! (%d)", rc);
 		MessageBox(0,(LPCTSTR)errstr,(LPCTSTR)"JackRouter",MB_OK);
 		return -1;
@@ -131,12 +130,11 @@ HRESULT _stdcall DllRegisterServer()
 HRESULT _stdcall DllUnregisterServer()
 {
 	LONG	rc;
-	char	errstr[128];
 
 	rc = UnregisterAsioDriver (IID_ASIO_DRIVER,JACK_ROUTER,"JackRouter");
 
 	if (rc) {
-		memset(errstr,0,128);
+		char errstr[128] = { 0 };
 		sprintf(errstr,"Unregister Server failed ! (%d)",rc);
 		MessageBox(0,(LPCTSTR)errstr,(LPCTSTR)"JackRouter",MB_OK);
 		return -1;
@@ -197,7 +195,7 @@ JackRouter::JackRouter() : AsioDriver()
 
 		// Compute .ini file path
 		string fullPath = dllName;
-		int lastPos = fullPath.find_last_of(PATH_SEP);
+		size_t lastPos = fullPath.find_last_of(PATH_SEP);
 		string  dllFolder =  fullPath.substr(0, lastPos);
 		confPath = dllFolder + PATH_SEP + "JackRouter.ini";
 
@@ -301,7 +299,7 @@ static bool GetEXEName(DWORD dwProcessID, char* name)
                     //Get the name of the exe file
                     GetModuleBaseName(hProcess, hMod, szEXEName,
                         sizeof(szEXEName)/sizeof(TCHAR));
-					int len = strlen((char*)szEXEName) - 4; // remove ".exe"
+					size_t len = strlen((char*)szEXEName) - 4; // remove ".exe"
 					strncpy(name, (char*)szEXEName, len);
 					name[len] = '\0';
 					return true;
@@ -330,8 +328,7 @@ void JackRouter::shutdownCallback(void* arg)
 {
 	JackRouter* driver = (JackRouter*)arg;
 	/*
-	char errstr[128];
-	memset(errstr,0,128);
+	char errstr[128] = { 0 };
 	sprintf(errstr,"JACK server has quit");
 	MessageBox(0,(LPCTSTR)errstr,(LPCTSTR)"JackRouter",MB_OK);
 	*/
@@ -347,7 +344,7 @@ void JackRouter::processInputs()
             jack_default_audio_sample_t* buffer = (jack_default_audio_sample_t*)jack_port_get_buffer(fInputPorts[i], fBufferSize);
             long* in = (long*)fInputBuffers[i] + pos;
             for (int j = 0; j < fBufferSize; j++) {
-                in[j] = buffer[j] * jack_default_audio_sample_t(0x7fffffff);
+                in[j] = (long)(buffer[j] * jack_default_audio_sample_t(0x7fffffff));
             }
         } else {
             memcpy((float*)fInputBuffers[i] + pos,
@@ -872,7 +869,7 @@ void JackRouter::bufferSwitchX()
 	if (fTcRead) {
 		// Create a fake time code, which is 10 minutes ahead of the card's sample position
 		// Please note that for simplicity here time code will wrap after 32 bit are reached
-		fAsioTime.timeCode.timeCodeSamples.lo = fAsioTime.timeInfo.samplePosition.lo + 600.0 * fSampleRate;
+		fAsioTime.timeCode.timeCodeSamples.lo = fAsioTime.timeInfo.samplePosition.lo + (unsigned long)(600.0 * fSampleRate);
 		fAsioTime.timeCode.timeCodeSamples.hi = 0;
 	}
 	fCallbacks->bufferSwitchTimeInfo(&fAsioTime, fToggle, ASIOFalse);
