@@ -8,3 +8,4 @@ If you want to start maintaining it yourself, please open a ticket for discussio
 
 Aim of this branch is to create an ARM64X version so that JackRouter can be used on Windows ARM64 in all possible variations (x86, x64, ARM64, ARM64EC).
 This, however, will have to wait until an ARM64X version of Jack2 has been done.
+I'm working on that ...
